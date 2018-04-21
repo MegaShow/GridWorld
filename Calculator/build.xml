@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<project default="build" xmlns:sonar="antlib:org.sonar.ant">
+    <description>A calculator with JavaFX.</description>
+    <property name="author" value="MegaShow"/>
+
+    <property environment="SystemVariable"/>
+
+    <property name="project.name" value="Calculator"/>
+    <property name="project.version" value="1.0"/>
+    <property name="project.build.dir" value="build"/>
+    <property name="project.dist.dir" value="dist"/>
+    <property name="project.lib.dir" value="lib"/>
+
+    <property name="main.package.name" value="com.icytown.calculator"/>
+    <property name="main.package.dir" value="com/icytown/calculator"/>
+    <property name="main.package.class" value="Main"/>
+    <property name="main.package.jarfile" value="calculator.jar"/>
+    <property name="main.build.dir" value="build/main"/>
+    <property name="main.dist.dir" value="dist/main"/>
+    <property name="main.java.dir" value="src/main/java"/>
+    <property name="main.res.dir" value="src/main/res"/>
+
+    <property name="test.package.name" value="com.icytown.calculator"/>
+    <property name="test.package.class" value="Main"/>
+    <property name="test.build.dir" value="build/test"/>
+    <property name="test.java.dir" value="src/test/java"/>
+
+    <target name="build">
+        <mkdir dir="${main.build.dir}"/>
+        <javac srcdir="${main.java.dir}" classpath="${main.java.dir}" destdir="${main.build.dir}" includeantruntime="false"/>
+        <copy todir="${main.build.dir}/${main.package.dir}">
+            <fileset dir="${main.res.dir}/fxml" includes="**/*.fxml"/>
+        </copy>
+    </target>
+
+    <target name="release" depends="build">
+        <mkdir dir="${main.dist.dir}"/>
+        <jar jarfile="${main.dist.dir}/${main.package.jarfile}" basedir="${main.build.dir}">
+            <manifest>
+                <attribute name="Built-By" value="${author}"/>
+                <attribute name="Main-Class" value="${main.package.name}.${main.package.class}"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="run" depends="build">
+        <java classname="${main.package.name}.${main.package.class}" classpath="${main.build.dir}" fork="true"/>
+    </target>
+
+    <target name="runjar" depends="release">
+        <java jar="${main.dist.dir}/${main.package.jarfile}" fork="true"/>
+    </target>
+
+    <target name="clean">
+        <delete dir="${project.dist.dir}"/>
+        <delete dir="${project.build.dir}"/>
+        <delete dir=".sonar"/>
+    </target>
+
+    <target name="test-build" depends="build">
+        <mkdir dir="${test.build.dir}"/>
+        <javac srcdir="${test.java.dir}"
+            classpath="${test.java.dir}:${main.build.dir}:${SystemVariable.CLASSPATH}:${project.lib.dir}/junit-4.9.jar"
+            destdir="${test.build.dir}" includeantruntime="false"/>
+    </target>
+
+    <target name="test" depends="test-build">
+        <junit printsummary="on" haltonfailure="yes" fork="true">
+            <classpath>
+                <pathelement location="${test.build.dir}"/>
+                <pathelement location="${main.build.dir}"/>
+                <pathelement location="${project.lib.dir}/junit-4.9.jar"/>
+            </classpath>
+            <formatter type="brief" usefile="false"/>
+            <batchtest>
+                <fileset dir="${test.java.dir}" includes="**/*Test.java"/>
+            </batchtest>
+        </junit>
+    </target>
+
+    <property name="sonar.host.url" value="http://localhost:9000"/>
+    <property name="sonar.projectKey" value="${project.name}"/>
+    <property name="sonar.projectName" value="${project.name}"/>
+    <property name="sonar.projectVersion" value="${project.version}"/>
+    <property name="sonar.sources" value="${main.java.dir}"/>
+    <property name="sonar.java.binaries" value="${project.build.dir}"/>
+    <property name="sonar.java.libraries" value="${project.lib.dir}/*.jar"/>
+    <target name="sonar" depends="build">
+        <taskdef uri="antlib:org.sonar.ant" resource="org/sonar/ant/antlib.xml">
+            <classpath path="${project.lib.dir}/sonarqube-ant-task-2.5.jar"/>
+        </taskdef>
+        <sonar:sonar/>
+    </target>
+</project>
